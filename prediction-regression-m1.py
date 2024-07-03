@@ -8,6 +8,17 @@ from sklearn.metrics import classification_report, confusion_matrix
 from tqdm import tqdm
 
 #%%
+#For Approach 1 (Logistic Regression)
+#Names (Company/Customer Names) - Categorical feature
+#Purchase Date - Converted to datetime and used to generate other features
+#Product - Categorical feature
+#Unit Volume - Numerical feature
+#Unit Price - Numerical feature
+#Days Since Last Purchase - Numerical feature derived from Purchase Date
+#Email - may not be relevant for prediction
+#Target: Binary variable indicating whether a purchase occurred within the last 180 days (1 if purchase occurred, 0 otherwise).
+
+#%%
 # Approach 1: Logistic Regression (Binary) - Predicts if a purchase will occur within a given period.
 # Load your dataset
 data = pd.read_csv('/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/SalesData_Model1.csv')
@@ -39,6 +50,7 @@ model = LogisticRegression(max_iter=1000)
 for _ in tqdm(range(1), desc="Training Model"):
     model.fit(X_train, y_train)
 
+#%%
 # Predict on the test set
 predictions = model.predict(X_test)
 
