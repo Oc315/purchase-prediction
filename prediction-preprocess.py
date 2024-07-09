@@ -153,3 +153,157 @@ print(f"Total Money Spent in 2022: ${total_money_2022:.2f}")
 print(f"Total Money Spent in 2022: ${total_money_2023:.2f}")
 
 # %%
+import pandas as pd
+import numpy as np
+from datetime import datetime
+
+# Load the dataset
+file_path = '/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/SalesData_Model1.csv'
+data = pd.read_csv(file_path)
+
+# Convert 'Purchase Date' to datetime
+data['Purchase Date'] = pd.to_datetime(data['Purchase Date'])
+
+# Sort the dataset by 'Names' (Customer ID) and 'Purchase Date'
+data = data.sort_values(by=['Names', 'Purchase Date'])
+
+# Rename 'Names' to 'ID'
+data.rename(columns={'Names': 'ID'}, inplace=True)
+
+# Create a new DataFrame for aggregated features
+customer_features = pd.DataFrame()
+customer_features['ID'] = data['ID'].unique()
+
+# Calculate purchase frequency
+purchase_frequency = data.groupby('ID').size().reset_index(name='purchase_frequency')
+
+# Calculate total and mean spent
+total_spent = data.groupby('ID')['Total Money Spent'].sum().reset_index(name='total_spent')
+mean_spent = data.groupby('ID')['Total Money Spent'].mean().reset_index(name='mean_spent')
+
+# Calculate mean and max purchase period
+data['previous_purchase_date'] = data.groupby('ID')['Purchase Date'].shift(1)
+data['purchase_period'] = (data['Purchase Date'] - data['previous_purchase_date']).dt.days
+mean_purchase_period = data.groupby('ID')['purchase_period'].mean().reset_index(name='mean_purchase_period')
+max_purchase_period = data.groupby('ID')['purchase_period'].max().reset_index(name='max_purchase_period')
+
+# Calculate max spent per purchase
+max_spent = data.groupby('ID')['Total Money Spent'].max().reset_index(name='max_spent')
+
+# Get the last purchase date
+last_purchase_date = data.groupby('ID')['Purchase Date'].max().reset_index(name='last_purchase_date')
+
+# Merge all features into the customer_features DataFrame
+customer_features = customer_features.merge(purchase_frequency, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(total_spent, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(mean_spent, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(mean_purchase_period, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(max_purchase_period, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(max_spent, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(last_purchase_date, on='ID', how='left', suffixes=('', '_y'))
+
+# Drop the redundant 'Names_y' columns from the merges
+customer_features.drop(columns=[col for col in customer_features.columns if col.endswith('_y')], inplace=True)
+
+# Retain the email feature
+email = data[['ID', 'Email']].drop_duplicates()
+customer_features = customer_features.merge(email, on='ID', how='left')
+
+# One-hot encode the product feature
+product_encoded = pd.get_dummies(data[['ID', 'Product']], columns=['Product'])
+product_encoded = product_encoded.groupby('ID').sum().reset_index()
+
+# Merge one-hot encoded product features into customer_features
+customer_features = customer_features.merge(product_encoded, on='ID', how='left')
+
+# Display the final customer_features DataFrame
+print(customer_features.head())
+
+# Save the final dataset
+customer_features.to_csv('/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/CustomerFeatures_Model1.csv', index=False)
+
+print("Customer-level dataset created successfully.")
+
+# %%
+import pandas as pd
+import numpy as np
+from datetime import datetime
+
+# Load the dataset
+file_path = '/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/SalesData_Model1.csv'
+data = pd.read_csv(file_path)
+
+# Convert 'Purchase Date' to datetime
+data['Purchase Date'] = pd.to_datetime(data['Purchase Date'])
+
+# Split the dataset into records before 2024 and records in and after 2024
+data_before_2024 = data[data['Purchase Date'] < '2024-01-01']
+data_2024_and_after = data[data['Purchase Date'] >= '2024-01-01']
+
+# Sort the dataset by 'Names' (Customer ID) and 'Purchase Date'
+data_before_2024 = data_before_2024.sort_values(by=['Names', 'Purchase Date'])
+data_2024_and_after = data_2024_and_after.sort_values(by=['Names', 'Purchase Date'])
+
+# Rename 'Names' to 'ID'
+data_before_2024.rename(columns={'Names': 'ID'}, inplace=True)
+data_2024_and_after.rename(columns={'Names': 'ID'}, inplace=True)
+
+# Create a new DataFrame for aggregated features
+customer_features = pd.DataFrame()
+customer_features['ID'] = data_before_2024['ID'].unique()
+
+# Calculate purchase frequency
+purchase_frequency = data_before_2024.groupby('ID').size().reset_index(name='purchase_frequency')
+
+# Calculate total and mean spent
+total_spent = data_before_2024.groupby('ID')['Total Money Spent'].sum().reset_index(name='total_spent')
+mean_spent = data_before_2024.groupby('ID')['Total Money Spent'].mean().reset_index(name='mean_spent')
+
+# Calculate mean and max purchase period
+data_before_2024['previous_purchase_date'] = data_before_2024.groupby('ID')['Purchase Date'].shift(1)
+data_before_2024['purchase_period'] = (data_before_2024['Purchase Date'] - data_before_2024['previous_purchase_date']).dt.days
+mean_purchase_period = data_before_2024.groupby('ID')['purchase_period'].mean().reset_index(name='mean_purchase_period')
+max_purchase_period = data_before_2024.groupby('ID')['purchase_period'].max().reset_index(name='max_purchase_period')
+
+# Calculate max spent per purchase
+max_spent = data_before_2024.groupby('ID')['Total Money Spent'].max().reset_index(name='max_spent')
+
+# Get the last purchase date
+last_purchase_date = data_before_2024.groupby('ID')['Purchase Date'].max().reset_index(name='last_purchase_date')
+
+# Merge all features into the customer_features DataFrame
+customer_features = customer_features.merge(purchase_frequency, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(total_spent, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(mean_spent, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(mean_purchase_period, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(max_purchase_period, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(max_spent, on='ID', how='left', suffixes=('', '_y'))
+customer_features = customer_features.merge(last_purchase_date, on='ID', how='left', suffixes=('', '_y'))
+
+# Drop the redundant 'Names_y' columns from the merges
+customer_features.drop(columns=[col for col in customer_features.columns if col.endswith('_y')], inplace=True)
+
+# Retain the email feature
+email = data_before_2024[['ID', 'Email']].drop_duplicates()
+customer_features = customer_features.merge(email, on='ID', how='left')
+
+# Add the '2024' column to indicate whether the customer made a purchase in 2024
+customer_features['2024'] = customer_features['ID'].isin(data_2024_and_after['ID']).astype(int)
+
+# One-hot encode the product feature
+product_encoded = pd.get_dummies(data_before_2024[['ID', 'Product']], columns=['Product'])
+product_encoded = product_encoded.groupby('ID').sum().reset_index()
+
+# Merge one-hot encoded product features into customer_features
+customer_features = customer_features.merge(product_encoded, on='ID', how='left')
+
+# Display the final customer_features DataFrame
+print(customer_features.head())
+
+# Save the final dataset
+customer_features.to_csv('/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/CustomerFeatures_Model1.csv', index=False)
+
+print("Customer-level dataset created successfully.")
+
+
+# %%
