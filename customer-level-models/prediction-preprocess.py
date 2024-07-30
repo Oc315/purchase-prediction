@@ -6,7 +6,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 #%%
-sales_data = pd.read_csv('/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/Sales21-24.csv')
+sales_data_21_24 = pd.read_csv('/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/Sales21-24.csv', dtype={'Customer ID': str})
+sales_data_15_21 = pd.read_csv('/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/Sales15-21.csv', dtype={'Customer ID': str})
+sales_data = pd.concat([sales_data_15_21, sales_data_21_24], ignore_index=True)
+sales_data.to_csv('/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/Sales15-24.csv', index=False)
+#%%
+sales_data = pd.read_csv('/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/Sales15-24.csv')
 customer_data = pd.read_csv('/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/AllCustomers.csv')
 
 sales_data['Customer ID'] = sales_data['Customer ID'].astype(str).str.strip()
@@ -53,37 +58,40 @@ cleaned_enhanced_file_path = '/Users/oceanuszhang/Documents/GitHub/purchase-pred
 model1_data.to_csv(cleaned_enhanced_file_path, index=False)
 
 # %%
-# EDA: Plot histogram for Purchase Month
+# Function to calculate Z-scores
+def calculate_z_scores(series):
+    return (series - series.mean()) / series.std()
+
+model1_data['Purchase Month Z'] = calculate_z_scores(model1_data['Purchase Month'])
+model1_data['Purchase Day Z'] = calculate_z_scores(model1_data['Purchase Day'])
+model1_data['Purchase Year Z'] = calculate_z_scores(model1_data['Purchase Year'])
+
+# Plot histogram for Purchase Month Z-scores
 plt.figure(figsize=(10, 5))
-plt.hist(model1_data['Purchase Month'], bins=12, edgecolor='black')
-plt.title('Histogram of Purchases by Month')
-plt.xlabel('Month')
-plt.ylabel('Number of Purchases')
-plt.xticks(range(1, 13))
+plt.hist(model1_data['Purchase Month Z'], bins=30, edgecolor='black')
+plt.title('Histogram of Z-Scores for Purchases by Month')
+plt.xlabel('Z-Score')
+plt.ylabel('Frequency')
 plt.grid(axis='y')
 plt.show()
 
-# Plot histogram for Purchase Day
+# Plot histogram for Purchase Day Z-scores
 plt.figure(figsize=(10, 5))
-plt.hist(model1_data['Purchase Day'], bins=31, edgecolor='black')
-plt.title('Histogram of Purchases by Day')
-plt.xlabel('Day of the Month')
-plt.ylabel('Number of Purchases')
-plt.xticks(range(1, 32))
+plt.hist(model1_data['Purchase Day Z'], bins=30, edgecolor='black')
+plt.title('Histogram of Z-Scores for Purchases by Day')
+plt.xlabel('Z-Score')
+plt.ylabel('Frequency')
 plt.grid(axis='y')
 plt.show()
 
-# Plot histogram for Purchase Year
+# Plot histogram for Purchase Year Z-scores
 plt.figure(figsize=(10, 5))
-plt.hist(model1_data['Purchase Year'], bins=len(model1_data['Purchase Year'].unique()), edgecolor='black')
-plt.title('Histogram of Purchases by Year')
-plt.xlabel('Year')
-plt.ylabel('Number of Purchases')
-plt.xticks(model1_data['Purchase Year'].unique())
+plt.hist(model1_data['Purchase Year Z'], bins=30, edgecolor='black')
+plt.title('Histogram of Z-Scores for Purchases by Year')
+plt.xlabel('Z-Score')
+plt.ylabel('Frequency')
 plt.grid(axis='y')
 plt.show()
-
-
 # %%
 # EDA: Plot histogram for Purchase Month for Each Year
 unique_years = model1_data['Purchase Year'].unique()
