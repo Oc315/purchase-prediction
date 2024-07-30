@@ -82,7 +82,7 @@ for month in range(1, 8):
     target_column = f'purchase_in_month_{month}_2024'
     customer_features[target_column] = 0
 
-# Update target columns for January to June based on actual data
+# Update target columns for January to May based on actual data
 for month in range(1, 7):
     purchase_dates_2024 = data_2024[(data_2024['Purchase Date'].dt.month == month)]
     customer_features.loc[customer_features['ID'].isin(purchase_dates_2024['ID']), f'purchase_in_month_{month}_2024'] = 1
@@ -187,11 +187,6 @@ if predictions_list:
     print("Predictions saved successfully.")
 else:
     print("No predictions were made due to insufficient data variation.")
-
-
-
-
-
 
 
 # %%
