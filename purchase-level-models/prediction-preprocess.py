@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 #%%
-import pandas as pd
-
 # Preprocessing
 customers_path = '/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/AllCustomers.csv'
 sales_path = '/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/SALESDATA.csv'
@@ -252,6 +250,8 @@ plt.tight_layout()
 plt.show()
 
 #%%
+file_path = '/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/purchase_level_m1.csv'
+final_data = pd.read_csv(file_path, dtype={'Customer ID': str})
 final_data['Date_Num'] = final_data['Date'].astype(int) // 10**9 
 
 features = ['Date_Num', 'Qty. Sold', 'Amount']
@@ -413,5 +413,62 @@ output_data['Predicted'] = output_data['Predicted'].astype(int)
 output_data['Actual'] = output_data['Actual'].astype(int)
 output_data = output_data[output_data['Actual'] == 1]
 output_data.to_csv(output_path, index=False)
+
+# %%
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Load the original sales data
+sales_data_file = "/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/SALESDATA.csv"
+sales_data = pd.read_csv(sales_data_file)
+
+# Ensure the 'Date' column is in datetime format
+sales_data['Date'] = pd.to_datetime(sales_data['Date'])
+
+# Load the evaluation files
+eval_file_05 = "/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/output/evaluation_2024-05.csv"
+eval_file_06 = "/Users/oceanuszhang/Documents/GitHub/purchase-prediction/sales-data/output/evaluation_2024-06.csv"
+
+eval_05 = pd.read_csv(eval_file_05)
+eval_06 = pd.read_csv(eval_file_06)
+
+# Merge the evaluation data with the original sales data to get the Date column
+eval_05_merged = eval_05.merge(sales_data[['ID', 'Date']], left_on='Customer ID', right_on='ID', how='left')
+eval_06_merged = eval_06.merge(sales_data[['ID', 'Date']], left_on='Customer ID', right_on='ID', how='left')
+
+# Drop the redundant 'ID' column from merged DataFrames
+eval_05_merged = eval_05_merged.drop(columns=['ID'])
+eval_06_merged = eval_06_merged.drop(columns=['ID'])
+
+# Combine the two evaluation DataFrames
+combined_eval = pd.concat([eval_05_merged, eval_06_merged])
+
+# Sort by date to ensure chronological order
+combined_eval = combined_eval.sort_values(by='Date')
+
+# Plot the data
+plt.figure(figsize=(14, 7))
+
+# Add a trendline for the predicted values
+z_predicted = np.polyfit(combined_eval['Date'].map(pd.Timestamp.toordinal), combined_eval['Predicted'], 1)
+p_predicted = np.poly1d(z_predicted)
+plt.plot(combined_eval['Date'], p_predicted(combined_eval['Date'].map(pd.Timestamp.toordinal)), color='blue', linestyle='--', linewidth=2, label='Trendline Predicted')
+
+# Add a trendline for the actual values
+z_actual = np.polyfit(combined_eval['Date'].map(pd.Timestamp.toordinal), combined_eval['Actual'], 1)
+p_actual = np.poly1d(z_actual)
+plt.plot(combined_eval['Date'], p_actual(combined_eval['Date'].map(pd.Timestamp.toordinal)), color='red', linestyle='-', linewidth=2, label='Trendline Actual')
+
+# Add labels and title
+plt.title('Trendline of Predicted vs Actual Over Time')
+plt.xlabel('Date')
+plt.ylabel('Value')
+plt.ylim(-0.1, 1.1)  # Since y-axis values are 0 and 1, limit the y-axis to just below 0 and above 1 for better visualization
+plt.grid(True)
+plt.legend()
+
+# Show the plot
+plt.show()
 
 # %%
